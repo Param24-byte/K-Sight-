@@ -4,6 +4,7 @@ from src.services.db.database import SessionLocal
 from src.services.db.models import AuditLog
 from jose import jwt
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +18,8 @@ class AuditMiddleware(BaseHTTPMiddleware):
             if auth_header and auth_header.startswith("Bearer "):
                 token = auth_header.split(" ")[1]
                 try:
-                    payload = jwt.decode(token, "HACKATHON_SUPER_SECRET_KEY", algorithms=["HS256"])
+                    secret_key = os.getenv("SECRET_KEY", "HACKATHON_SUPER_SECRET_KEY")
+                    payload = jwt.decode(token, secret_key, algorithms=["HS256"])
                     user_id = payload.get("sub") # In our mock setup, sub is the username
                 except Exception:
                     pass
@@ -25,8 +27,10 @@ class AuditMiddleware(BaseHTTPMiddleware):
             # Log the action to DB
             db = SessionLocal()
             try:
+                from src.services.db.models import User
+                db_user = db.query(User).filter(User.username == user_id).first() if user_id else None
                 log_entry = AuditLog(
-                    user_id=1 if user_id else 0, # Hack for demo, store as integer or just ID
+                    user_id=db_user.id if db_user else 0, # Map to actual User ID
                     action=request.method,
                     endpoint=request.url.path
                 )

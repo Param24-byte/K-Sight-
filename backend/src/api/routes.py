@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 import sys
 import os
 
@@ -11,7 +11,7 @@ from src.services.db.models import User
 router = APIRouter()
 
 @router.get("/intelligence/firs")
-def get_firs(limit: int = 100, current_user: User = Depends(get_current_user)):
+def get_firs(limit: int = Query(100, le=1000), current_user: User = Depends(get_current_user)):
     """Fetch FIRs with coordinates for the map"""
     query = """
     MATCH (i:Incident)-[:OCCURRED_AT]->(l:Location)
@@ -27,7 +27,7 @@ def get_firs(limit: int = 100, current_user: User = Depends(get_current_user)):
         return {"error": str(e), "message": "Ensure Neo4j is running"}
 
 @router.get("/graph/suspects")
-def get_suspect_graph(limit: int = 50, current_user: User = Depends(require_role(["Investigator", "Supervisor", "Policymaker"]))):
+def get_suspect_graph(limit: int = Query(50, le=500), current_user: User = Depends(require_role(["Investigator", "Supervisor", "Policymaker"]))):
     """Fetch a subgraph of suspects, phones, and vehicles"""
     query = """
     MATCH (p:Person)

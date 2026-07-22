@@ -7,8 +7,9 @@ from sqlalchemy.orm import Session
 from src.services.db.database import get_db
 from src.services.db.models import User
 from pydantic import BaseModel
+import os
 
-SECRET_KEY = "HACKATHON_SUPER_SECRET_KEY" # Do not use hardcoded keys in production
+SECRET_KEY = os.getenv("SECRET_KEY", "HACKATHON_SUPER_SECRET_KEY")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
