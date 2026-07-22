@@ -11,6 +11,7 @@
   "dependencies": {
     "@types/leaflet": "^1.9.21",
     "axios": "^1.18.1",
+    "dagre": "^0.8.5",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.25.0",
     "next": "16.2.11",
@@ -21,6 +22,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/dagre": "^0.7.54",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

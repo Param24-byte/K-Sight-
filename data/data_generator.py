@@ -64,7 +64,7 @@ def generate_data():
 
     start_date = datetime.now() - timedelta(days=365)
     
-    for _ in range(NUM_FIRS):
+    for i in range(NUM_FIRS):
         crime, sections, mo_tags = random.choice(crime_types)
         loc_name, lat, lng = random.choice(locations)
         
@@ -84,7 +84,7 @@ def generate_data():
             involved_suspects = [random.choice(suspects)]
             
         fir = {
-            "fir_id": f"FIR-2023-BLR-{random.randint(1000,9999)}",
+            "fir_id": f"FIR-2023-BLR-{i:05d}",
             "date": date.isoformat(),
             "location": {"name": loc_name, "lat": lat, "lng": lng},
             "type": crime,

@@ -28,7 +28,8 @@ export default function IntelligenceMap() {
 
   useEffect(() => {
     // In a real environment, handle error state and loading better
-    axios.get('http://localhost:8000/api/v1/intelligence/firs')
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    axios.get(`${API_URL}/api/v1/intelligence/firs`)
       .then(res => {
         if (Array.isArray(res.data)) {
           setFirs(res.data);

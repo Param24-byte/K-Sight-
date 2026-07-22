@@ -35,7 +35,15 @@ docker-compose up -d
 ```
 *(This will start Neo4j, Qdrant, Postgres, and Redis).*
 
-### 2. Setup the Python Backend
+### 2. Configure Environment Variables
+Create a `.env` file from the example template and add your Google Gemini API key:
+```bash
+cp .env.example .env
+```
+Open the `.env` file and set `GEMINI_API_KEY=your_actual_api_key_here`. 
+*(Note: If no key is set, the system will fall back to a hardcoded mock mode, but the AI won't generate real responses).*
+
+### 3. Setup the Python Backend
 Open a terminal in the root directory and create a virtual environment:
 ```bash
 python -m venv venv
@@ -43,10 +51,10 @@ python -m venv venv
 pip install -r backend/requirements.txt
 ```
 
-### 3. Generate Mock Data & Run the ETL Pipeline
+### 4. Generate Mock Data & Run the ETL Pipeline
 We have included a mock data generator that creates 1,000 synthetic FIRs with hidden crime syndicates for testing.
 ```bash
-# 1. Generate the data (Optional if data/mock_firs.json already exists)
+# 1. Generate the data (Optional if data/firs.json already exists)
 cd data
 python data_generator.py
 cd ..
@@ -55,7 +63,7 @@ cd ..
 python backend/src/tasks/etl_pipeline.py
 ```
 
-### 4. Start the Application Servers
+### 5. Start the Application Servers
 You will need two terminal windows for this.
 
 **Terminal 1 (Backend):**
@@ -67,11 +75,10 @@ uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
 **Terminal 2 (Frontend):**
 ```bash
 cd frontend
-npm install
 npm run dev
 ```
 
-### 5. Access the Platform
+### 6. Access the Platform
 Open your browser and navigate to:
 👉 **[http://localhost:3000](http://localhost:3000)**
 

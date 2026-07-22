@@ -14,13 +14,17 @@ if api_key != "MOCK_KEY_FOR_DATATHON":
 
 class LLMClient:
     def __init__(self):
-        try:
-            self.model = genai.GenerativeModel('gemini-1.5-pro')
-        except Exception as e:
+        if api_key == "MOCK_KEY_FOR_DATATHON":
             logger.warning("Gemini API not configured properly, using fallback mode.")
             self.model = None
+        else:
+            try:
+                self.model = genai.GenerativeModel('gemini-1.5-pro')
+            except Exception as e:
+                logger.warning("Gemini API error, using fallback mode.")
+                self.model = None
 
-    def ask(self, query: str) -> dict:
+    def ask(self, query: str, language: str = "English") -> dict:
         """Hybrid RAG implementation"""
         logger.info(f"Processing AI Query: {query}")
         
@@ -53,6 +57,7 @@ class LLMClient:
         prompt = f"""
         You are an elite Crime Intelligence AI for the Karnataka State Police.
         Answer the user's query using ONLY the provided evidence. Cite the FIR IDs in your answer.
+        You MUST reply exclusively in {language}.
         
         User Query: "{query}"
         
@@ -68,7 +73,10 @@ class LLMClient:
             response = self.model.generate_content(prompt)
             answer = response.text
         else:
-            answer = f"Mocked AI Response based on context:\n\n{fir_context}\n\n{graph_context}"
+            if language == "Kannada":
+                answer = f"ಮಾಕ್ ಎಐ ಪ್ರತಿಕ್ರಿಯೆ (Mock AI Response in Kannada):\n\n{fir_context}\n\n{graph_context}"
+            else:
+                answer = f"Mocked AI Response based on context:\n\n{fir_context}\n\n{graph_context}"
 
         return {
             "answer": answer,

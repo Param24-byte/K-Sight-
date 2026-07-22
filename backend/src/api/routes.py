@@ -1,15 +1,17 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 import sys
 import os
 
 # Ensure services can be imported
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 from src.services.graph.neo4j_client import neo4j_client
+from src.api.auth import get_current_user, require_role
+from src.services.db.models import User
 
 router = APIRouter()
 
 @router.get("/intelligence/firs")
-def get_firs(limit: int = 100):
+def get_firs(limit: int = 100, current_user: User = Depends(get_current_user)):
     """Fetch FIRs with coordinates for the map"""
     query = """
     MATCH (i:Incident)-[:OCCURRED_AT]->(l:Location)
@@ -25,7 +27,7 @@ def get_firs(limit: int = 100):
         return {"error": str(e), "message": "Ensure Neo4j is running"}
 
 @router.get("/graph/suspects")
-def get_suspect_graph(limit: int = 50):
+def get_suspect_graph(limit: int = 50, current_user: User = Depends(require_role(["Investigator", "Supervisor", "Policymaker"]))):
     """Fetch a subgraph of suspects, phones, and vehicles"""
     query = """
     MATCH (p:Person)
