@@ -69,3 +69,4 @@ docker-compose.override.yml
 data/mock_firs.json
 logs/
 *.log
+Police_FIR_ER_Diagram.pdf

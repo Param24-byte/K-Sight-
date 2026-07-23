@@ -88,7 +88,7 @@ export default function GraphVisualizer() {
             position: { x: 0, y: 0 }, // Will be overridden by dagre
             data: { label: n.label },
             style: { 
-              background: n.type === 'person' ? '#ef4444' : n.type === 'phone' ? '#3b82f6' : '#10b981',
+              background: n.type === 'accused' ? '#ef4444' : n.type === 'incident' ? '#3b82f6' : n.type === 'complainant' ? '#10b981' : n.type === 'victim' ? '#f59e0b' : '#8b5cf6',
               color: 'white',
               border: '1px solid rgba(255,255,255,0.2)',
               borderRadius: '8px',

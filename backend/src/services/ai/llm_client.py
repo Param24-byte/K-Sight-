@@ -24,11 +24,12 @@ class LLMClient:
                 logger.warning("Gemini API error, using fallback mode.")
                 self.model = None
 
-    def ask(self, query: str, language: str = "English") -> dict:
+    def ask(self, query: str, language: str = "English", history: list = None) -> dict:
         """Hybrid RAG implementation"""
         logger.info(f"Processing AI Query: {query}")
         
         # 1. Retrieve Semantic Context from Qdrant
+        confidence = 0.0
         embedding = vector_client.encoder.encode(query).tolist()
         try:
             search_result = vector_client.client.search(
@@ -40,6 +41,9 @@ class LLMClient:
                 f"FIR {hit.payload.get('fir_id')} at {hit.payload.get('location')}: {hit.payload.get('narrative')}" 
                 for hit in search_result
             ])
+            if search_result:
+                scores = [hit.score for hit in search_result]
+                confidence = round(sum(scores) / len(scores), 2)
         except Exception:
             fir_context = "Could not reach Qdrant for semantic search."
 
@@ -54,10 +58,19 @@ class LLMClient:
             graph_context = "Could not reach Neo4j for graph search."
 
         # 3. Construct the Augmented Prompt
+        history_text = ""
+        if history:
+            history_text = "Previous Conversation Context:\n"
+            for m in history:
+                role = "User" if m["role"] == "user" else "Assistant"
+                history_text += f"{role}: {m['content']}\n"
+
         prompt = f"""
         You are an elite Crime Intelligence AI for the Karnataka State Police.
         Answer the user's query using ONLY the provided evidence. Cite the FIR IDs in your answer.
         You MUST reply exclusively in {language}.
+        
+        {history_text}
         
         User Query: "{query}"
         
@@ -80,7 +93,7 @@ class LLMClient:
 
         return {
             "answer": answer,
-            "confidence": 0.85, # In a real implementation, calculate based on distance scores
+            "confidence": confidence,
             "citations": [hit.payload.get("fir_id") for hit in search_result] if 'search_result' in locals() else []
         }
 

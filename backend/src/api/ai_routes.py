@@ -13,12 +13,13 @@ router = APIRouter()
 class AIQuery(BaseModel):
     query: str
     language: str = "English"
+    history: list = []
 
 @router.post("/ai/ask")
 def ask_assistant(payload: AIQuery, current_user: User = Depends(get_current_user)):
     """Hybrid RAG endpoint that generates intelligence from Graph and Vector DBs"""
     try:
-        response = llm_client.ask(payload.query, payload.language)
+        response = llm_client.ask(payload.query, payload.language, payload.history)
         return response
     except Exception as e:
         return {"error": str(e), "message": "Failed to process AI request."}

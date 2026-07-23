@@ -11,81 +11,90 @@ class Neo4jClient:
         _user = user or os.getenv("NEO4J_USER", "neo4j")
         _password = password or os.getenv("NEO4J_PASSWORD", "password")
         self.driver = GraphDatabase.driver(_uri, auth=(_user, _password))
+        
     def close(self):
         self.driver.close()
 
     def setup_constraints(self):
         """Creates unique constraints to prevent duplicate nodes during ingestion"""
         queries = [
-            "CREATE CONSTRAINT IF NOT EXISTS FOR (p:Person) REQUIRE p.id IS UNIQUE",
-            "CREATE CONSTRAINT IF NOT EXISTS FOR (p:Phone) REQUIRE p.number IS UNIQUE",
-            "CREATE CONSTRAINT IF NOT EXISTS FOR (v:Vehicle) REQUIRE v.license_plate IS UNIQUE",
-            "CREATE CONSTRAINT IF NOT EXISTS FOR (i:Incident) REQUIRE i.fir_id IS UNIQUE"
+            "CREATE CONSTRAINT IF NOT EXISTS FOR (c:Complainant) REQUIRE c.id IS UNIQUE",
+            "CREATE CONSTRAINT IF NOT EXISTS FOR (v:Victim) REQUIRE v.id IS UNIQUE",
+            "CREATE CONSTRAINT IF NOT EXISTS FOR (a:Accused) REQUIRE a.id IS UNIQUE",
+            "CREATE CONSTRAINT IF NOT EXISTS FOR (i:Incident) REQUIRE i.fir_id IS UNIQUE",
+            "CREATE CONSTRAINT IF NOT EXISTS FOR (act:Act) REQUIRE act.id IS UNIQUE",
+            "CREATE CONSTRAINT IF NOT EXISTS FOR (sec:Section) REQUIRE sec.id IS UNIQUE",
         ]
         with self.driver.session() as session:
             for query in queries:
                 session.run(query)
         logger.info("Neo4j constraints verified.")
 
-    def ingest_suspect(self, suspect_data):
-        """Ingests a suspect and their phone/vehicle into the graph"""
-        query = """
-        MERGE (p:Person {id: $id})
-        SET p.name = $name, p.age = $age
-        
-        WITH p
-        WHERE $phone IS NOT NULL
-        MERGE (phone:Phone {number: $phone})
-        MERGE (p)-[:OWNS_PHONE]->(phone)
-        
-        WITH p
-        WHERE $vehicle IS NOT NULL
-        MERGE (v:Vehicle {license_plate: $vehicle})
-        MERGE (p)-[:OWNS_VEHICLE]->(v)
-        """
+    def clear_database(self):
         with self.driver.session() as session:
-            session.run(query, 
-                        id=suspect_data.get("id"),
-                        name=suspect_data.get("name"),
-                        age=suspect_data.get("age"),
-                        phone=suspect_data.get("phone"),
-                        vehicle=suspect_data.get("vehicle"))
+            session.run("MATCH (n) DETACH DELETE n")
 
-    def ingest_fir(self, fir_data):
-        """Ingests an FIR, Location, and connects involved Suspects"""
+    def ingest_act_section(self, act_data, section_data):
         query = """
-        // 1. Merge Incident
-        MERGE (i:Incident {fir_id: $fir_id})
-        SET i.type = $type, 
-            i.date = $date, 
-            i.narrative = $narrative,
-            i.ipc_sections = $ipc_sections,
-            i.mo_tags = $mo_tags
-            
-        // 2. Merge Location
-        MERGE (l:Location {name: $loc_name})
-        ON CREATE SET l.lat = $lat, l.lng = $lng
-        MERGE (i)-[:OCCURRED_AT]->(l)
+        MERGE (act:Act {id: $act_code})
+        SET act.name = $act_name
         
-        // 3. Connect Suspects
-        WITH i
-        UNWIND $suspects_involved AS suspect_id
-        MERGE (p:Person {id: suspect_id}) // Create if not exists
-        MERGE (p)-[:COMMITTED]->(i)
+        MERGE (sec:Section {id: $sec_id})
+        SET sec.code = $sec_code, sec.description = $sec_desc
+        
+        MERGE (sec)-[:BELONGS_TO]->(act)
         """
-        loc = fir_data.get("location", {})
         with self.driver.session() as session:
             session.run(query,
-                        fir_id=fir_data.get("fir_id"),
-                        type=fir_data.get("type"),
-                        date=fir_data.get("date"),
-                        narrative=fir_data.get("narrative"),
-                        ipc_sections=fir_data.get("ipc_sections", []),
-                        mo_tags=fir_data.get("mo_tags", []),
-                        loc_name=loc.get("name"),
-                        lat=loc.get("lat"),
-                        lng=loc.get("lng"),
-                        suspects_involved=fir_data.get("suspects_involved", []))
+                        act_code=act_data["ActCode"],
+                        act_name=act_data["ActDescription"],
+                        sec_id=section_data["id"],
+                        sec_code=section_data["SectionCode"],
+                        sec_desc=section_data["SectionDescription"])
 
-# Singleton instance
+    def ingest_cases_batch(self, cases_payload):
+        """Ingests a batch of fully relational case graphs"""
+        query = """
+        UNWIND $payload AS row
+        
+        // 1. Incident & Location
+        MERGE (i:Incident {fir_id: row.CrimeNo})
+        SET i.case_no = row.CaseNo,
+            i.date = row.CrimeRegisteredDate,
+            i.brief_facts = row.BriefFacts,
+            i.status = row.CaseStatusID
+            
+        MERGE (l:Location {lat: row.latitude, lng: row.longitude})
+        MERGE (i)-[:OCCURRED_AT]->(l)
+        
+        // 2. Sections invoked
+        WITH i, row
+        UNWIND row.sections AS sec_id
+        MERGE (sec:Section {id: sec_id})
+        MERGE (i)-[:INVOKES]->(sec)
+        
+        // 3. Complainants
+        WITH i, row
+        UNWIND row.complainants AS comp
+        MERGE (c:Complainant {id: comp.id})
+        SET c.name = comp.name, c.age = comp.age
+        MERGE (c)-[:FILED]->(i)
+        
+        // 4. Victims
+        WITH i, row
+        UNWIND row.victims AS vic
+        MERGE (v:Victim {id: vic.id})
+        SET v.name = vic.name, v.age = vic.age
+        MERGE (v)-[:VICTIM_IN]->(i)
+        
+        // 5. Accused
+        WITH i, row
+        UNWIND row.accused AS acc
+        MERGE (a:Accused {id: acc.id})
+        SET a.name = acc.name, a.age = acc.age
+        MERGE (a)-[:IS_ACCUSED_IN]->(i)
+        """
+        with self.driver.session() as session:
+            session.run(query, payload=cases_payload)
+
 neo4j_client = Neo4jClient()

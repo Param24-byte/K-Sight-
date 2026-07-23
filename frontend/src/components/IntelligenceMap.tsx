@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import MarkerClusterGroup from 'react-leaflet-cluster';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import axios from 'axios';
@@ -52,16 +53,18 @@ export default function IntelligenceMap() {
           attribution='&copy; <a href="https://carto.com/">CartoDB</a>'
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
         />
-        {firs.map((fir, idx) => (
-          <Marker key={idx} position={[fir.lat, fir.lng]} icon={icon}>
-            <Popup className="bg-slate-800 text-slate-100 p-2 rounded">
-              <strong className="text-red-400">{fir.type}</strong><br />
-              ID: {fir.fir_id}<br />
-              Loc: {fir.location_name}<br />
-              Date: {new Date(fir.date).toLocaleDateString()}
-            </Popup>
-          </Marker>
-        ))}
+        <MarkerClusterGroup chunkedLoading>
+          {firs.map((fir, idx) => (
+            <Marker key={idx} position={[fir.lat, fir.lng]} icon={icon}>
+              <Popup className="bg-slate-800 text-slate-100 p-2 rounded">
+                <strong className="text-red-400">{fir.type}</strong><br />
+                ID: {fir.fir_id}<br />
+                Loc: {fir.location_name}<br />
+                Date: {new Date(fir.date).toLocaleDateString()}
+              </Popup>
+            </Marker>
+          ))}
+        </MarkerClusterGroup>
       </MapContainer>
     </div>
   );

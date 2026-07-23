@@ -34,6 +34,10 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-200 flex flex-col font-sans overflow-x-hidden">
+      {/* Mock Auth Banner */}
+      <div className="bg-yellow-500/20 text-yellow-500 px-4 py-1.5 text-xs text-center border-b border-yellow-500/50 font-medium">
+        Mock Auth Mode: Role switcher enabled for hackathon demonstration purposes. No real credentials required.
+      </div>
       {/* Top Navbar */}
       <header className="min-h-16 h-auto border-b border-slate-800 bg-slate-900/50 flex flex-wrap items-center px-4 lg:px-6 py-3 lg:py-0 justify-between backdrop-blur gap-4 lg:gap-0 sticky top-0 z-50">
         <div className="flex items-center gap-3">

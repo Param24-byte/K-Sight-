@@ -89,7 +89,8 @@ export default function AIChatAssistant() {
       const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
       const res = await axios.post(`${API_URL}/api/v1/ai/ask`, { 
         query: userMsg,
-        language: language 
+        language: language,
+        history: messages.map(m => ({ role: m.role, content: m.content }))
       });
       
       const assistantReply = res.data.answer;
