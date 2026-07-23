@@ -2,15 +2,18 @@ from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, PointStruct
 from sentence_transformers import SentenceTransformer
 import logging
+import os
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class VectorDBClient:
-    def __init__(self, host="localhost", port=6333):
+    def __init__(self, host=None, port=None):
+        _host = host or os.getenv("QDRANT_HOST", "localhost")
+        _port = port or int(os.getenv("QDRANT_PORT", "6333"))
         # We load the embedding model in memory
         self.encoder = SentenceTransformer('all-MiniLM-L6-v2')
-        self.client = QdrantClient(host=host, port=port)
+        self.client = QdrantClient(host=_host, port=_port)
         self.collection_name = "firs"
         
     def setup_collection(self):

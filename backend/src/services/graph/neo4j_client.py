@@ -1,13 +1,16 @@
 from neo4j import GraphDatabase
 import logging
+import os
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class Neo4jClient:
-    def __init__(self, uri="bolt://localhost:7687", user="neo4j", password="password"):
-        self.driver = GraphDatabase.driver(uri, auth=(user, password))
-        
+    def __init__(self, uri=None, user=None, password=None):
+        _uri = uri or os.getenv("NEO4J_URI", "bolt://localhost:7687")
+        _user = user or os.getenv("NEO4J_USER", "neo4j")
+        _password = password or os.getenv("NEO4J_PASSWORD", "password")
+        self.driver = GraphDatabase.driver(_uri, auth=(_user, _password))
     def close(self):
         self.driver.close()
 
