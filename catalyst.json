@@ -6,7 +6,7 @@
     {
       "name": "intelligence-api",
       "source": "backend",
-      "build_path": "."
+      "build": "."
     }
   ]
 }
