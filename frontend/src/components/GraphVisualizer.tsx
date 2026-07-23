@@ -14,7 +14,8 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import axios from 'axios';
 import dagre from 'dagre';
-import { ZoomIn, ZoomOut, Maximize, Search, X } from 'lucide-react';
+import { Search, Loader2, X, ZoomIn, ZoomOut, Maximize } from 'lucide-react';
+import SimilarCasesPanel from './SimilarCasesPanel';
 
 const CustomZoomControls = () => {
   const { zoomIn, zoomOut, fitView } = useReactFlow();
@@ -92,10 +93,16 @@ export default function GraphVisualizer() {
       if (res.data && res.data.nodes) {
         const rawNodes: Node[] = res.data.nodes.map((n: any) => ({
           id: n.id,
+          type: n.type,
           position: { x: 0, y: 0 },
-          data: { label: n.type === 'incident' ? `FIR: ${n.label}` : n.label, details: n.details, type: n.type },
+          data: { 
+            label: n.type === 'incident' ? `FIR: ${n.label}` : n.label, 
+            details: n.details, 
+            type: n.type,
+            risk_score: n.risk_score 
+          },
           style: { 
-            background: n.type === 'accused' ? '#ef4444' : n.type === 'incident' ? '#b91c1c' : n.type === 'complainant' ? '#10b981' : n.type === 'victim' ? '#f59e0b' : '#8b5cf6',
+            background: n.type === 'incident' ? '#b91c1c' : n.type === 'accused' ? (n.risk_score > 60 ? '#ef4444' : n.risk_score >= 30 ? '#f59e0b' : '#10b981') : n.type === 'complainant' ? '#10b981' : n.type === 'victim' ? '#f59e0b' : '#8b5cf6',
             color: 'white',
             border: n.type === 'incident' ? '2px solid #f87171' : '1px solid rgba(255,255,255,0.2)',
             borderRadius: n.type === 'incident' ? '4px' : '8px',
@@ -135,7 +142,6 @@ export default function GraphVisualizer() {
 
   return (
     <div className="h-full w-full rounded-xl overflow-hidden border border-slate-700 bg-slate-900 shadow-2xl relative flex flex-col">
-      {/* Search Bar */}
       <div className="p-3 bg-slate-800/80 backdrop-blur border-b border-slate-700 z-10 flex gap-2">
         <form onSubmit={handleSearch} className="flex-1 flex gap-2">
           <div className="relative flex-1">
@@ -149,7 +155,7 @@ export default function GraphVisualizer() {
             />
           </div>
           <button type="submit" disabled={loading} className="bg-red-500 hover:bg-red-600 text-white px-4 py-1.5 rounded-md text-sm font-medium transition-colors disabled:opacity-50">
-            {loading ? "Searching..." : "Explore Case"}
+            {loading ? <Loader2 className="animate-spin" size={16} /> : "Explore Case"}
           </button>
         </form>
       </div>
@@ -176,7 +182,6 @@ export default function GraphVisualizer() {
           </ReactFlowProvider>
         )}
 
-        {/* Side Panel Drawer */}
         {selectedNode && (
           <div className="absolute top-4 right-4 w-72 bg-slate-800/95 backdrop-blur-md border border-slate-700 rounded-xl shadow-2xl z-20 flex flex-col max-h-[calc(100%-2rem)]">
             <div className="flex items-center justify-between p-3 border-b border-slate-700">
@@ -190,11 +195,16 @@ export default function GraphVisualizer() {
             <div className="p-4 overflow-y-auto flex flex-col gap-3 text-sm">
               <p className="text-slate-300"><span className="text-slate-500 font-medium">ID:</span> {selectedNode.id}</p>
               {selectedNode.data.details && Object.entries(selectedNode.data.details).map(([k, v]) => (
-                <div key={k}>
-                  <p className="text-slate-500 font-medium">{k}:</p>
-                  <p className="text-slate-300 mt-0.5">{String(v)}</p>
+                <div key={k} className="flex flex-col">
+                  <span className="text-xs text-slate-400">{k}</span>
+                  <span className="text-sm font-medium">{String(v)}</span>
                 </div>
               ))}
+              {selectedNode.type === 'incident' && (
+                <div className="mt-6 border-t border-slate-700 pt-4">
+                  <SimilarCasesPanel firId={selectedNode.id} />
+                </div>
+              )}
             </div>
           </div>
         )}
