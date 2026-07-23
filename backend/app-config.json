@@ -1,5 +1,5 @@
 {
-  "env": "python311",
+  "stack": "python311",
   "command": "uvicorn main:app --host 0.0.0.0 --port $X_ZOHO_CATALYST_LISTEN_PORT",
   "build_path": "."
 }
