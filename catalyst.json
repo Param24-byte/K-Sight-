@@ -7,6 +7,10 @@
       "name": "intelligence-api",
       "source": "backend",
       "build": "."
+    },
+    {
+      "source": "appsail-python",
+      "name": "temp-api"
     }
   ]
 }
