@@ -5,7 +5,8 @@
   "appsail": [
     {
       "name": "intelligence-api",
-      "source": "backend"
+      "source": "backend",
+      "build_path": "."
     }
   ]
 }
