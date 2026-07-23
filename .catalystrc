@@ -1,0 +1,30 @@
+{
+  "defaults": {
+    "project": 1,
+    "env": 1
+  },
+  "actives": {
+    "project": 1,
+    "env": 1
+  },
+  "projects": [
+    {
+      "idx": 1,
+      "id": "53428000000013052",
+      "name": "K-Sight",
+      "domain": {
+        "id": "50044296493",
+        "name": "k-sight-60079746114.development"
+      },
+      "timezone": "Asia/Kolkata",
+      "env": [
+        {
+          "idx": 1,
+          "id": "60079746114",
+          "name": "Development",
+          "type": 3
+        }
+      ]
+    }
+  ]
+}
